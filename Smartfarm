@@ -5,6 +5,67 @@
 
 int soil = A0;   // 아날로그 수분센서
 
+// constants won't change
+const int Relay_PIN = A5;  // the Arduino pin, which connects to the IN pin of relay
+
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2); //아두이노의 디지털핀 번호에 연결
+SDISerial bluetooth(0, 1);
+String readString; 
+
+void setup() {
+  
+pinMode(Relay_PIN, OUTPUT); 
+
+Serial.begin(9600); 
+lcd.clear(); 
+lcd.begin(16, 2); 
+lcd.print("Hello World !");
+delay(3000); 
+
+}
+
+
+void loop() { 
+
+
+int water_value = analogRead(soil);
+int water = map(water_value, 0, 1023,0, 100); 
+Serial.print("Read sensor value = "); 
+Serial.println(water_value);
+Serial.print("Water Content = "); 
+Serial.print(water); 
+Serial.println(" %");
+
+lcd.clear();
+lcd.setCursor(0, 0);
+lcd.print("Value = ");
+lcd.print(water_value);
+lcd.setCursor(0, 1);
+lcd.print("W C = ");
+lcd.print(water);
+lcd.print(" %");
+//delay(3000);
+
+ if(water_value<=320){
+digitalWrite(Relay_PIN, HIGH); // turn on pump 5 seconds
+ }
+
+else { 
+digitalWrite(Relay_PIN, LOW);  // turn off pump 5 seconds
+}
+delay(5000);
+
+}
+
+
+#include <SDISerial.h> 
+#include <LiquidCrystal.h> 
+
+
+
+int soil = A0;   // 아날로그 수분센서
+
 
 // constants won't change
 const int Relay_PIN = A5;  // the Arduino pin, which connects to the IN pin of relay

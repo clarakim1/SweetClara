@@ -1,133 +1,62 @@
-//*제주대학교 조영열 교수님 저서 농가보급형 수분관리시스템*//
-//*스마트팜 러닝과정*//
-
-
-
 #include <SDISerial.h> 
 #include <LiquidCrystal.h> 
 
-#define INPUT SIZE 30 
-#define NUMSAMPLES 5 
-#define DATA_PIN 7 
-#define INVERTED 1 
-#define Relay 8 
 
-int sensorDelay = 1000; 
-float bulkDens = 0.4; 
-float theta=1-(bulkDens/2.65); 
-char* samples; 
 
-SDISerial sdi_serial_connection(DATA_PIN,INVERTED); 
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2); 
+int soil = A0;   // 아날로그 수분센서
+
+
+// constants won't change
+const int Relay_PIN = A5;  // the Arduino pin, which connects to the IN pin of relay
+
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2); //아두이노의 디지털핀 번호에 연결
 SDISerial bluetooth(0, 1);
 String readString; 
 
-void setup() { 
-  pinMode(Relay, OUTPUT); 
-Serial.begin(1200); 
-sdi_serial_connection.begin(); 
-delay(3000); 
+void setup() {
+  
+pinMode(Relay_PIN, OUTPUT); 
+
+Serial.begin(9600); 
 lcd.clear(); 
-lcd.begin(20, 4); 
+lcd.begin(16, 2); 
 lcd.print("Hello World !");
 delay(3000); 
+
 }
 
 
 void loop() { 
-uint8_t i; 
-float dielectric[NUMSAMPLES]; 
-float soilMoist[NUMSAMPLES]; 
-float degC[NUMSAMPLES]; 
-float bulkEC[NUMSAMPLES]; 
-float porewaterEC[NUMSAMPLES]; 
-float solutionEC[NUMSAMPLES]; 
 
 
-float dielMean = 0.0; 
-float soilMoistMean = 0.0; 
-float degCMean = 0.0; 
-float bulkECMean = 0.0; 
-float porewaterECMean = 0.0; 
-float solutionECMean = 0.0; 
+int water_value = analogRead(soil);
+int water = map(water_value, 295, 1023, 100, 0); 
+Serial.print("Read sensor value = "); 
+Serial.println(water_value);
+Serial.print("Water Content = "); 
+Serial.print(water); 
+Serial.println(" %");
 
-for (i = 0; i < NUMSAMPLES; i++) { 
-  samples=get_measurement(); 
-   while (strlen(samples) < 5){ 
-    samples=get_measurement(); 
-   }
-char* term1 = strtok(samples,"+"); 
+lcd.clear();
+lcd.setCursor(0, 0);
+lcd.print("Value = ");
+lcd.print(water_value);
+lcd.setCursor(0, 1);
+lcd.print("W C = ");
+lcd.print(water);
+lcd.print(" %");
+//delay(3000);
 
-term1 = strtok(NULL,"+"); 
-degC[i] = atof(term1); 
+ if(water_value<=253){
+digitalWrite(Relay_PIN, HIGH); // turn on pump 5 seconds
+ }
 
-term1 = strtok(NULL,"+"); 
-degC[i] = atof(term1); 
-term1 = strtok(NULL,"+"); 
-bulkEC[i] = atof(term1); 
-porewaterEC[i] = ((80.3-0.37*(degC[i]-20))*bulkEC[i]/1000)/(dielectric[i] - 6); 
-
-if (bulkEC[i] < 5){
-  soilMoist[i] = (5.89*pow(10.0, -6.0) * pow(dielectric[i], 3.0)) - (7.62 *pow(10.0, -4.0) *pow(dielectric[i], 2.0)) + (3.67 * pow(10.0, -2.0) * dielectric[i]) - (7.53 * pow(10.0, -2.0));
-} else { 
-  soilMoist[i] = 0.118*sqrt(dielectric[i]) - 0.117; 
+else { 
+digitalWrite(Relay_PIN, LOW);  // turn off pump 5 seconds
 }
-solutionEC[i]=(bulkEC[i]/1000*soilMoist[i])/theta; 
+delay(5000);
 
-dielMean += dielectric[i]; 
-soilMoistMean += soilMoist[i]; 
-degCMean +=degC[i]; 
-bulkECMean += bulkEC[i]; 
-porewaterECMean += porewaterEC[i]; 
-solutionECMean += solutionEC[i]; 
 }
 
-dielMean  /= NUMSAMPLES; 
-soilMoistMean /= NUMSAMPLES; 
-degCMean   /= NUMSAMPLES; 
-bulkECMean   /= NUMSAMPLES; 
-porewaterECMean  /= NUMSAMPLES; 
-solutionECMean   /= NUMSAMPLES; 
 
-lcd.clear(); 
-lcd.setCursor(0, 0); 
-lcd.print("Jeju National Univ."); 
-lcd.setCursor(0, 1); 
-lcd.print("VWC = "); 
-lcd.print(soilMoistMean*100); 
-lcd.print(" %"); 
-lcd.setCursor(0, 2); 
-
-lcd.print("EC = ");
-lcd.print(bulkECMean/1000); 
-lcd.print(" dS/m"); 
-lcd.setCursor(0,3); 
-lcd.print("Temp= "); 
-lcd.print(degCMean); 
-lcd.print("oC"); 
-delay(sensorDelay); 
-
-if ((soilMoistMean*100)<= 20) { 
-  digitalWrite(Relay, HIGH); 
-  delay(10000); 
-}else { 
-  digitalWrite(Relay, LOW); 
-   delay(1000); 
-}
-
-readString = ""; 
-String data = String(soilMoistMean*100) + "," + String(bulkECMean / 1000) + "," + String(degCMean); 
-Serial.println(data); 
-while (Serial.available()) {
-  delay(3); 
-char c = Serial.read(); 
-readString += c; 
-}
-}
-
-char* get_measurement() 
-{
- char* service_request = sdi_serial_connection.sdi_query("?M!", sensorDelay); 
- char* service_request_complete = sdi_serial_connection.wait_for_response(sensorDelay); 
- return sdi_serial_connection.sdi_query("?D0!", sensorDelay); 
-}

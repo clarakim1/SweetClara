@@ -19,20 +19,20 @@ void setup() {
   pinMode(Relay, OUTPUT); 
   Serial.begin(9600); 
   lcd.init();                      // initialize the lcd 
-  lcd.init(); 
+ 
   // Print a message to the LCD. 
   lcd.backlight(); 
   lcd.setCursor(0, 0); 
   lcd.print("Hello, world!"); 
   lcd.setCursor(0, 1); 
-  lcd.print("Happy Jeju"); 
+  lcd.print("Happy Jeju~"); 
   delay(5000); 
 } 
 
 void loop() { 
   // put your main code here, to run repeatedly: 
   int Water_Value = analogRead(Water); 
-   int Water_Percentage = map(Water_Value, 0, 1023,0, 70);  //map(value, fromLow, fromHigh, toLow, toHigh)
+   int Soil_Moisture = map(Water_Value, 0, 1023,0, 70);  //map(value, fromLow, fromHigh, toLow, toHigh)
 
   Serial.println(Water_Value); 
 
@@ -42,7 +42,7 @@ void loop() {
   lcd.print(Water_Value); 
   lcd.setCursor(0, 1); 
    lcd.print("Soil="); 
-     lcd.print(Water_Percentage); 
+     lcd.print(Soil_Moisture); 
      lcd.print("%");    
   delay(1000); 
 
@@ -55,7 +55,7 @@ void loop() {
   } 
 
   readString = ""; 
-  String data = "Water Value="+String(Water_Value) + "," + String(Relay) + ","+"Soil Moisture="+String(Water_Percentage)+"%"; 
+  String data = "Water Value="+String(Water_Value) + "," + String(Relay) + ","+"Soil Moisture="+String(Soil_Moisture)+"%"; 
   Serial.println(data); 
 
   while (Serial.available()) { 

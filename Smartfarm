@@ -2,6 +2,7 @@
 제주대학교 원예학과 조영열 교수님 스마트팜 특강
 */
 
+
 #include <SoftwareSerial.h> 
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h> 
@@ -16,15 +17,14 @@ String readString;
 void setup() { 
   // put your setup code here, to run once: 
   pinMode(Relay, OUTPUT); 
-  Serial.begin(9600); 
-  lcd.init();                      // initialize the lcd 
-  lcd.init(); 
+  lcd.init();                  // initialize the lcd 
+ 
   // Print a message to the LCD. 
   lcd.backlight(); 
   lcd.setCursor(0, 0); 
   lcd.print("Hello, world!"); 
   lcd.setCursor(0, 1); 
-  lcd.print("Jeju Nat'l Univ."); 
+  lcd.print("Happy Jeju"); 
   delay(5000); 
 } 
 
@@ -38,10 +38,10 @@ void loop() {
 
   lcd.clear(); 
   lcd.setCursor(0, 0); 
-  lcd.print("Water = "); 
-  lcd.print(Water_Value); 
+  lcd.print("Water="); 
+  lcd.print(Water_Value);
   lcd.setCursor(0, 1); 
-  lcd.print("-------------"); 
+
 
   delay(1000); 
 
@@ -54,7 +54,7 @@ void loop() {
   } 
 
   readString = ""; 
-  String data = "WV="+String(Water_Value) + "," + String(Relay) + "," + String(Water_Percentage)+"%"; 
+  String data = "Water Value="+String(Water_Value) + "," + String(Water_Percentage)+"%"; 
   Serial.println(data); 
 
   while (Serial.available()) { 

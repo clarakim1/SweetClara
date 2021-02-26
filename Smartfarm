@@ -8,7 +8,7 @@
 #include <LiquidCrystal_I2C.h> 
 
 #define Water A0 
-#define Relay 7
+#define Relay 7 
 
 SoftwareSerial mySerial(0, 1); 
 LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display 
@@ -17,8 +17,9 @@ String readString;
 void setup() { 
   // put your setup code here, to run once: 
   pinMode(Relay, OUTPUT); 
-  lcd.init();                  // initialize the lcd 
- 
+  Serial.begin(9600); 
+  lcd.init();                      // initialize the lcd 
+  lcd.init(); 
   // Print a message to the LCD. 
   lcd.backlight(); 
   lcd.setCursor(0, 0); 
@@ -31,21 +32,21 @@ void setup() {
 void loop() { 
   // put your main code here, to run repeatedly: 
   int Water_Value = analogRead(Water); 
-  int Water_Percentage = map(Water_Value, 0, 1023,0, 70);  //map(value, fromLow, fromHigh, toLow, toHigh)
-
+   int Water_Percentage = map(Water_Value, 0, 1023,0, 70);  //map(value, fromLow, fromHigh, toLow, toHigh)
 
   Serial.println(Water_Value); 
 
   lcd.clear(); 
   lcd.setCursor(0, 0); 
   lcd.print("Water="); 
-  lcd.print(Water_Value);
+  lcd.print(Water_Value); 
   lcd.setCursor(0, 1); 
-
-
+   lcd.print("Soil="); 
+     lcd.print(Water_Percentage); 
+     lcd.print("%");    
   delay(1000); 
 
-  if (Water_Value <= 270) { 
+  if (Water_Value <= 302) { 
     digitalWrite(Relay, HIGH); 
     delay(1000); 
   } else { 
@@ -54,7 +55,7 @@ void loop() {
   } 
 
   readString = ""; 
-  String data = "Water Value="+String(Water_Value) + "," + String(Water_Percentage)+"%"; 
+  String data = "Water Value="+String(Water_Value) + "," + String(Relay) + ","+"Soil Moisture="+String(Water_Percentage)+"%"; 
   Serial.println(data); 
 
   while (Serial.available()) { 
@@ -63,8 +64,7 @@ void loop() {
     readString += c; 
   } 
 
-  if (readString.length() > 0) 
-  lcd.print("Start pumping");{ 
+  if (readString.length() > 0) { 
     if (readString == "a") { 
       digitalWrite(Relay, HIGH); 
       delay(2000); 

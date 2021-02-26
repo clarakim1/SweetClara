@@ -1,60 +1,77 @@
-#include <SDISerial.h> 
-#include <LiquidCrystal.h> 
+/*
+제주대학교 원예학과 조영열 교수님 스마트팜 특강
+*/
 
+#include <SoftwareSerial.h> 
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h> 
 
+#define Water A0 
+#define Relay 7
 
-int soil = A0;   // 아날로그 수분센서
-
-// constants won't change
-const int Relay_PIN = A5;  // the Arduino pin, which connects to the IN pin of relay
-
-
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2); //아두이노의 디지털핀 번호에 연결
-SDISerial bluetooth(0, 1);
+SoftwareSerial mySerial(0, 1); 
+LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display 
 String readString; 
 
-void setup() {
-  
-pinMode(Relay_PIN, OUTPUT); 
-
-Serial.begin(9600); 
-lcd.clear(); 
-lcd.begin(16, 2); 
-lcd.print("Hello World !");
-delay(3000); 
-
-}
-
+void setup() { 
+  // put your setup code here, to run once: 
+  pinMode(Relay, OUTPUT); 
+  Serial.begin(9600); 
+  lcd.init();                      // initialize the lcd 
+  lcd.init(); 
+  // Print a message to the LCD. 
+  lcd.backlight(); 
+  lcd.setCursor(0, 0); 
+  lcd.print("Hello, world!"); 
+  lcd.setCursor(0, 1); 
+  lcd.print("Jeju Nat'l Univ."); 
+  delay(5000); 
+} 
 
 void loop() { 
+  // put your main code here, to run repeatedly: 
+  int Water_Value = analogRead(Water); 
+  int Water_Percentage = map(Water_Value, 0, 1023,0, 70);  //map(value, fromLow, fromHigh, toLow, toHigh)
 
 
-int water_value = analogRead(soil);
-int water = map(water_value, 0, 1023,0, 100); 
-Serial.print("Read sensor value = "); 
-Serial.println(water_value);
-Serial.print("Water Content = "); 
-Serial.print(water); 
-Serial.println(" %");
+  Serial.println(Water_Value); 
 
-lcd.clear();
-lcd.setCursor(0, 0);
-lcd.print("Value = ");
-lcd.print(water_value);
-lcd.setCursor(0, 1);
-lcd.print("W C = ");
-lcd.print(water);
-lcd.print(" %");
-//delay(3000);
+  lcd.clear(); 
+  lcd.setCursor(0, 0); 
+  lcd.print("Water = "); 
+  lcd.print(Water_Value); 
+  lcd.setCursor(0, 1); 
+  lcd.print("-------------"); 
 
- if(water_value<=320){
-digitalWrite(Relay_PIN, HIGH); // turn on pump 5 seconds
- }
+  delay(1000); 
 
-else { 
-digitalWrite(Relay_PIN, LOW);  // turn off pump 5 seconds
+  if (Water_Value <= 270) { 
+    digitalWrite(Relay, HIGH); 
+    delay(1000); 
+  } else { 
+    digitalWrite(Relay, LOW); 
+    delay(5000); 
+  } 
+
+  readString = ""; 
+  String data = "WV="+String(Water_Value) + "," + String(Relay) + "," + String(Water_Percentage)+"%"; 
+  Serial.println(data); 
+
+  while (Serial.available()) { 
+    delay(3); 
+    char c = Serial.read(); 
+    readString += c; 
+  } 
+
+  if (readString.length() > 0) 
+  lcd.print("Start pumping");{ 
+    if (readString == "a") { 
+      digitalWrite(Relay, HIGH); 
+      delay(2000); 
+    } 
+    if (readString == "b") { 
+      digitalWrite(Relay, LOW); 
+      delay(2000); 
+    } 
+  } 
 }
-delay(5000);
-
-}
-

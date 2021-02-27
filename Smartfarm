@@ -46,16 +46,17 @@ void loop() {
      lcd.print("%");    
   delay(1000); 
 
-  if (Water_Value <= 240) { 
+  if (Water_Value <= 200) { 
     digitalWrite(Relay, HIGH); 
-    delay(1000); 
+    delay(8000); 
   } else { 
     digitalWrite(Relay, LOW); 
     delay(5000); 
   } 
 
   readString = ""; 
-  String data = "Sensor Value="+String(Water_Value) + "," + String(Relay) + ","+"Water Content="+String(Water_Content)+"%"; 
+  String data = String(Water_Value) +","+String(Relay) +","+String(Water_Content); 
+
   Serial.println(data); 
 
   while (Serial.available()) { 

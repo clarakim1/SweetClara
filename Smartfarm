@@ -38,8 +38,7 @@ void setup() {
 void loop() { 
   // put your main code here, to run repeatedly: 
   int Water_Value = analogRead(Water); 
-   int Water_Content = map(Water_Value, 0, 1023,0, 70);  //map(value, fromLow, fromHigh, toLow, toHigh)
-
+   int Water_Content = map(Water_Value, 1023, 165, 0, 100);  //map(value, fromLow, fromHigh, toLow, toHigh)
  
   lcd.clear(); 
   lcd.setCursor(0, 0); 

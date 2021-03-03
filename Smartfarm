@@ -2,26 +2,24 @@
 제주대학교 원예학과 조영열 교수님 스마트팜 특강
 */
 
-
-/*
-제주대학교 원예학과 조영열 교수님 스마트팜 특강
-*/
-
-
-#include <SoftwareSerial.h> 
+#include <LiquidCrystal_I2C.h>
+#include <SoftwareSerial.h>
 #include <Wire.h> 
-#include <LiquidCrystal_I2C.h> 
 
+
+#define Relay 7
 #define Water A0 
-#define Relay 7 
 
 SoftwareSerial mySerial(0,1);   //RX TX
 LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display 
 String readString; 
 
+void setup() {
+    // put your setup code here, to run once:
+    Serial.begin(9600);
+    pinMode(Relay, OUTPUT);
 
-void setup() { 
-  // put your setup code here, to run once: 
+     // put your setup code here, to run once: 
   pinMode(Relay, OUTPUT); 
   Serial.begin(9600); 
   lcd.init();                      // initialize the lcd 
@@ -33,24 +31,66 @@ void setup() {
   lcd.setCursor(0, 1); 
   lcd.print("Happy Jeju"); 
   delay(5000); 
-              } 
+  
+}
 
-void loop() { 
-  // put your main code here, to run repeatedly: 
-  int Water_Value = analogRead(Water); 
-   int Water_Content = map(Water_Value, 1023, 165, 0, 100);  //map(value, fromLow, fromHigh, toLow, toHigh)
+void RelayOff() {
+  if (readString == "b") {   
+    digitalWrite(Relay, LOW);
+  }
  
-  lcd.clear(); 
+}
+
+bool RelayOn;
+
+void MyDelay(int ms) {
+   for(int i=0;i<ms;i++){
+      if (Serial.available())
+      {
+        RelayOff();
+        RelayOn = false;
+        break;
+      }
+      delay(1);
+   }
+}
+
+void RelayON() {
+
+    char c = Serial.read(); 
+    readString += c; 
+
+
+   if (readString.length() > 0)
+       { 
+    if (readString == "a") { 
+    digitalWrite(Relay, HIGH);
+    MyDelay(5000);
+      if (readString == "b") { 
+     digitalWrite(Relay,LOW);}
+         
+    //if(! RelayOn) return;
+    //digitalWrite(Relay, LOW);
+   // MyDelay(1000);
+    }  
+}
+}
+void loop() {
+
+   int Water_Value = analogRead(Water); 
+   int Water_Content = map(Water_Value, 1023, 165, 0, 100);  //map(value, fromLow, fromHigh, toLow, toHigh)
+
+ lcd.clear(); 
   lcd.setCursor(0, 0); 
   lcd.print("Sensor Value="); 
   lcd.print(Water_Value); 
   lcd.setCursor(0, 1); 
-   lcd.print("Water Con.="); 
-     lcd.print(Water_Content); 
-     lcd.print("%");    
+  lcd.print("Water Con.="); 
+  lcd.print(Water_Content); 
+  lcd.print("%");    
   delay(1000); 
 
-  if (Water_Value <= 200) { 
+  if (Water_Value <= 400) { 
     digitalWrite(Relay, HIGH); 
     delay(1000); 
                           } 
@@ -59,25 +99,18 @@ void loop() {
     delay(1000); 
   } 
 
+
   readString = ""; 
   String data = String(Water_Value) +","+String(Relay) +","+String(Water_Content)+",";  
   Serial.println(data); 
 
-  while (Serial.available()) { 
-    delay(1000); 
-    char c = Serial.read(); 
-    readString += c; 
-  if (readString.length() > 0)
-       { 
-    if (readString == "a") { 
-      digitalWrite(Relay, HIGH); 
-      delay(1000); 
-                            } 
-    if (readString == "b") { 
-      digitalWrite(Relay, LOW); 
-      delay(100); 
-                            } 
-       } 
 
-                             }
+
+  RelayOn = true;
+  RelayON();
+ if(Serial.available())
+  {
+    RelayOff();
+    RelayOn = false;
+  }
 }
